@@ -87,7 +87,7 @@ require( [ 'three', 'stats', 'voxel/extra/three/helper', 'voxel/extra/three/mate
 	
 	window.requestAnimationLoop( function ( ) {
 		
-		voxelHelper.update( );
+		voxelHelper.update( 1 );
 		
 		stats.update( );
 		
