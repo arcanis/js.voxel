@@ -1,9 +1,13 @@
 Voxel.js
 ========
 
+[Test page](http://arcanis.github.com/voxel.js/test)
+
 This library allows you to have a voxel engine in your application.
 
 It's currently a draft, so please feel free to contribute. I will look every pull request.
+
+Furthermore, it is **very** slow (unusable in production, halas). I would like to improve its performances, but I'm not sure how to do. Maybe workers could help, but I'm not sure about this (main overhead come from retrieving data from memory, and I don't see how to parallelize memory with current worker implementation).
 
 Dependencies
 ------------
@@ -16,6 +20,8 @@ Usage
 -----
 
 ### Main API
+
+The main API could be used with any libraries. It's a generic implementation of a voxel engine, which is mean to be subclassed by classes overriding some specials functions.
 
 #### Engine
 
@@ -48,7 +54,7 @@ Usage
 
 You can use this class as every others three.js objects.
 
- * *getVoxel(Three.Vector3)* : Get the value of the given voxel.
+ * *getVoxel(Three.Vector3)* : Get the value of the given voxel, or `null`.
  * *setVoxel(Three.Vector3, mixed)* : Set the value of the given voxel.
  * *update()* : Updates the mesh with the last voxels changes.
 
