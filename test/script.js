@@ -23,7 +23,7 @@ require( [ 'three', 'stats', 'voxel/extra/three/helper', 'voxel/extra/three/mate
 	
 	var ambientLight = new Three.AmbientLight( 0 );
 	
-	var voxelHelper = new VoxelHelper( 20 );
+	var voxelHelper = new VoxelHelper( );
 	
 	var scene = new Three.Scene( );
 	scene.add( new Three.AxisHelper( ) );
