@@ -80,6 +80,8 @@ VOXEL.VoxelEngine.prototype.commit = function ( ) {
 		operations : this.operations
 	} );
 
+	this.operations = [ ];
+
 };
 
 VOXEL.VoxelEngine.prototype.receive = function ( event ) {

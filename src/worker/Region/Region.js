@@ -79,38 +79,31 @@ VOXEL.Region.prototype.update = function ( ) {
 						edgesVertexes[ t ] = [
 							regionRelativeX + verticeOffset[ 0 ] + edgeDirection[ 0 ] / 2,
 							regionRelativeY + verticeOffset[ 1 ] + edgeDirection[ 1 ] / 2,
-							regionRelativeZ + verticeOffset[ 2 ] + edgeDirection[ 2 ] / 2
+							regionRelativeZ + verticeOffset[ 2 ] + edgeDirection[ 2 ] / 2,
+							cubeValues[ edge[ +( cubeValues[ edge[ 0 ] ] === 0xFFFFFFFF ) ] ]
 						];
 
 					}
 
 				}
 
-				var triangles = triangleConnections[ edgesFlagsIndex ];
+				var connections = triangleConnections[ edgesFlagsIndex ];
 
-				for ( var u = 0, U = triangles.length / 3; u < U; ++ u ) {
+				for ( var u = 0, U = connections.length / 3; u < U; ++ u ) {
 
-					var vertexes = [ null, null, null ];
+					var vertex_0 = edgesVertexes[ connections[ 3 * u + 0 ] ];
+					var vertex_1 = edgesVertexes[ connections[ 3 * u + 1 ] ];
+					var vertex_2 = edgesVertexes[ connections[ 3 * u + 2 ] ];
 
-					for ( var v = 0; v < 3; ++ v ) {
+					var axis_0 = [ vertex_1[ 0 ] - vertex_0[ 0 ], vertex_1[ 1 ] - vertex_0[ 1 ], vertex_1[ 2 ] - vertex_0[ 2 ] ];
+					var axis_1 = [ vertex_2[ 0 ] - vertex_0[ 0 ], vertex_2[ 1 ] - vertex_0[ 1 ], vertex_2[ 2 ] - vertex_0[ 2 ] ];
 
-						var vertexIndex = triangles[ 3 * u + v ];
-
-						var vertex = vertexes[ v ] = edgesVertexes[ vertexIndex ];
-
-						vertex[ 3 ] = cubeValues[ edge[ +( cubeValues[ edge[ 0 ] ] === 0xFFFFFFFF ) ] ];
-
-					}
-
-					var firstAxis = [ vertexes[ 1 ][ 0 ] - vertexes[ 0 ][ 0 ], vertexes[ 1 ][ 1 ] - vertexes[ 0 ][ 1 ], vertexes[ 1 ][ 2 ] - vertexes[ 0 ][ 2 ] ];
-					var secondAxis = [ vertexes[ 2 ][ 0 ] - vertexes[ 0 ][ 0 ], vertexes[ 2 ][ 1 ] - vertexes[ 0 ][ 1 ], vertexes[ 2 ][ 2 ] - vertexes[ 0 ][ 2 ] ];
-
-					var crossProduct = [ firstAxis[ 1 ] * secondAxis[ 2 ] - firstAxis[ 2 ] * secondAxis[ 1 ], firstAxis[ 2 ] * secondAxis[ 0 ] - firstAxis[ 0 ] * secondAxis[ 2 ], firstAxis[ 0 ] * secondAxis[ 1 ] - firstAxis[ 1 ] * secondAxis[ 0 ] ];
+					var crossProduct = [ axis_0[ 1 ] * axis_1[ 2 ] - axis_0[ 2 ] * axis_1[ 1 ], axis_0[ 2 ] * axis_1[ 0 ] - axis_0[ 0 ] * axis_1[ 2 ], axis_0[ 0 ] * axis_1[ 1 ] - axis_0[ 1 ] * axis_1[ 0 ] ];
 
 					var squareRoot = Math.sqrt( Math.pow( crossProduct[ 0 ], 2 ) + Math.pow( crossProduct[ 1 ], 2 ) + Math.pow( crossProduct[ 2 ], 2 ) );
 					var normal = [ - crossProduct[ 0 ] / squareRoot, - crossProduct[ 1 ] / squareRoot, - crossProduct[ 2 ] / squareRoot ];
 
-					polygons.push( [ vertexes, normal ] );
+					polygons.push( [ [ vertex_0, vertex_1, vertex_2 ], normal ] );
 
 				}
 

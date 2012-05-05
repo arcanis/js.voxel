@@ -19,7 +19,7 @@ VOXEL.ThreeManager.prototype.onUpdateCommand = function ( position, polygons ) {
 	var vertexIndexCache = Object.create( null );
 
 	var geometry = new THREE.Geometry( );
-	var material = new THREE.MeshLambertMaterial( { vertexColors : THREE.VertexColors } );
+	var material = new THREE.MeshLambertMaterial( { vertexColors : THREE.VertexColors, shading : THREE.FlatShading } );
 
 	var vertexes = geometry.vertices;
 	var faces = geometry.faces;
