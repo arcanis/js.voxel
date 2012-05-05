@@ -1,0 +1,17 @@
+{
+  "author": "Maël Nison <nison.mael@gmail.com> (http://www.arcastel.com/)",
+  "name": "wo-voxel",
+  "description": "Voxel engine implementation",
+  "version": "0.0.1",
+  "homepage": "http://github.com/arcanis/js.voxel/",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/arcanis/js.voxel.git"
+  },
+  "dependencies": {
+    "uglify-js": "*"
+  },
+  "scripts": {
+    "build": "node utils/build.js"
+  }
+}

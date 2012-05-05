@@ -1,0 +1,37 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Perlin generated</title>
+        <link rel="stylesheet" href="css/common.css" />
+        <script src="../build/Voxel.js"></script>
+        <script src="js/Three.js"></script>
+        <script src="js/Perlin.js"></script>
+        <script src="js/common.js"></script>
+    </head>
+    <body>
+    </body>
+    <script>
+		create( function ( scene, camera ) {
+
+			camera.position.set( 100, 100, 100 );
+			camera.updateMatrix( );
+			camera.lookAt( new THREE.Vector3( 0, 0, 0 ) );
+
+            var manager = new VOXEL.ThreeManager( );
+            var voxelEngine = new VOXEL.VoxelEngine( manager );
+
+            var perlin = new PERLIN.Generator( );
+            perlin.generate( [ 0, 0 ], [ 101, 101 ], function ( point, value ) {
+                value = Math.floor( value * 50 );
+                for ( var t = 0; t < value; ++ t ) {
+                    voxelEngine.set( point[ 0 ] - 50, t, point[ 1 ] - 50, 0xff0000 );
+                }
+            } );
+
+            voxelEngine.commit( );
+
+            scene.add( manager.object3D );
+
+        } );
+    </script>
+</html>
