@@ -1,7 +1,6 @@
 var fs = require( 'fs' );
 
-var parser = require( 'uglify-js' ).parser;
-var uglify = require( 'uglify-js' ).uglify;
+var uglifyJS = require( 'uglify-js' );
 
 var getSourceCode = function ( list ) {
 
@@ -15,12 +14,7 @@ var getSourceCode = function ( list ) {
 
 var uglifySourceCode = function ( sourceCode ) {
 
-	var ast = parser.parse( sourceCode );
-
-	ast = uglify.ast_mangle( ast );
-	ast = uglify.ast_squeeze( ast );
-
-	return uglify.gen_code( ast );
+	return uglifyJS.minify( sourceCode, { fromString : true } ).code;
 
 };
 
