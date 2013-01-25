@@ -1,15 +1,36 @@
 <!doctype html>
 <html>
+
     <head>
-        <title>Voxel.js examples</title>
+        <link rel="stylesheet" type="text/css" href="styles/app.css" />
+
+        <script src="vendors/jQuery.js"></script>
+
+        <script src="vendors/Three.js"></script>
+        <script src="vendors/Three.ext/FirstPersonControls.js"></script>
+
+        <script src="vendors/Perlin.js"></script>
+
+        <script src="../build/Voxel.js"></script>
     </head>
+
     <body>
-        <ul>
-            <li><a href="single_point.html">Single point</a></li>
-            <li><a href="multiple_colors.html">Multiple colors</a></li>
-            <li><a href="flat_map.html">Flat map</a></li>
-            <li><a href="perlin_generated.html">Perlin generated</a></li>
-            <li><a href="binvox_loader.html">BinVox loader</a></li>
-        </ul>
+        <div id="app">
+
+            <div id="loading">
+                <div class="progressbar">
+                    <div class="cursor">
+                    </div>
+                </div>
+            </div>
+
+            <canvas id="screen">
+            </canvas>
+
+        </div>
     </body>
+
+    <script src="scripts/scene.js"></script>
+    <script src="scripts/app.js"></script>
+
 </html>

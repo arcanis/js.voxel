@@ -1,98 +1,91 @@
-VOXEL.RegionMap = function ( blockMap ) {
+VOXEL.RegionMap = function ( db ) {
 
-	this.blockMap = blockMap || new VOXEL.BlockMap( );
+    this.db = db || Object.create( null );
 
-	this.indexedRegions = Object.create( null );
-	this.regionsNeedingUpdate = [ ];
+    this.indexedRegions = Object.create( null );
+    this.regionsNeedingUpdate = [ ];
+
+};
+
+VOXEL.RegionMap.prototype.prepareRegion = function ( regionX, regionY, regionZ ) {
+
+    var regionKey = regionZ * REGION_WIDTH * REGION_HEIGHT + regionY * REGION_WIDTH + regionX;
+
+    return ( this.indexedRegions[ regionKey ] )
+        || ( this.indexedRegions[ regionKey ] = new VOXEL.Region( this, regionX, regionY, regionZ ) );
 
 };
 
 VOXEL.RegionMap.prototype.prepareRegionUpdate = function ( regionX, regionY, regionZ ) {
 
-	regionX = Math.floor( regionX );
-	regionY = Math.floor( regionY );
-	regionZ = Math.floor( regionZ );
+    var region = this.prepareRegion( regionX, regionY, regionZ );
 
-	var regionIdentifier = regionX + '/' + regionY + '/' + regionZ;
-
-	var region = this.indexedRegions[ regionIdentifier ];
-
-	if ( !region )
-		region = this.indexedRegions[ regionIdentifier ] = new VOXEL.Region( this, regionX, regionY, regionZ );
-
-	if ( !region.needsUpdate) {
-
-		this.regionsNeedingUpdate.push( region );
-		region.needsUpdate = true;
-
-	}
+    if ( ! region.needsUpdate) {
+        this.regionsNeedingUpdate.push( region );
+        region.needsUpdate = true;
+    }
 
 };
 
 VOXEL.RegionMap.prototype.set = function ( voxelX, voxelY, voxelZ, value ) {
 
-	voxelX = Math.floor( voxelX );
-	voxelY = Math.floor( voxelY );
-	voxelZ = Math.floor( voxelZ );
+    var regionX = Math.floor( voxelX / REGION_WIDTH );
+    var regionY = Math.floor( voxelY / REGION_HEIGHT );
+    var regionZ = Math.floor( voxelZ / REGION_DEPTH );
 
-	var regionWidth = VOXEL.Region.width;
-	var regionHeight = VOXEL.Region.height;
-	var regionDepth = VOXEL.Region.depth;
+    var isXAdjacent = voxelX % REGION_WIDTH === 0;
+    var isYAdjacent = voxelY % REGION_HEIGHT === 0;
+    var isZAdjacent = voxelZ % REGION_DEPTH === 0;
 
-	var regionX = Math.floor( voxelX / regionWidth );
-	var regionY = Math.floor( voxelY / regionHeight );
-	var regionZ = Math.floor( voxelZ / regionDepth );
+    if ( true )
+        this.prepareRegionUpdate( regionX, regionY, regionZ );
 
-	var isXAdjacent = voxelX % regionWidth === 0;
-	var isYAdjacent = voxelY % regionHeight === 0;
-	var isZAdjacent = voxelZ % regionDepth === 0;
+    if ( isXAdjacent )
+        this.prepareRegionUpdate( regionX - 1, regionY, regionZ );
 
-	if ( true )
-		this.prepareRegionUpdate( regionX, regionY, regionZ );
+    if ( isYAdjacent )
+        this.prepareRegionUpdate( regionX, regionY - 1, regionZ );
 
-	if ( isXAdjacent )
-		this.prepareRegionUpdate( regionX - 1, regionY, regionZ );
+    if ( isZAdjacent )
+        this.prepareRegionUpdate( regionX, regionY, regionZ - 1 );
 
-	if ( isYAdjacent )
-		this.prepareRegionUpdate( regionX, regionY - 1, regionZ );
+    if ( isXAdjacent && isYAdjacent )
+        this.prepareRegionUpdate( regionX - 1, regionY - 1, regionZ );
 
-	if ( isZAdjacent )
-		this.prepareRegionUpdate( regionX, regionY, regionZ - 1 );
+    if ( isXAdjacent && isZAdjacent )
+        this.prepareRegionUpdate( regionX - 1, regionY, regionZ - 1 );
 
-	if ( isXAdjacent && isYAdjacent )
-		this.prepareRegionUpdate( regionX - 1, regionY - 1, regionZ );
+    if ( isYAdjacent && isZAdjacent )
+        this.prepareRegionUpdate( regionX, regionY - 1, regionZ - 1 );
 
-	if ( isXAdjacent && isZAdjacent )
-		this.prepareRegionUpdate( regionX - 1, regionY, regionZ - 1 );
+    if ( isXAdjacent && isYAdjacent && isZAdjacent )
+        this.prepareRegionUpdate( regionX - 1, regionY - 1, regionZ - 1 );
 
-	if ( isYAdjacent && isZAdjacent )
-		this.prepareRegionUpdate( regionX, regionY - 1, regionZ - 1 );
-
-	if ( isXAdjacent && isYAdjacent && isZAdjacent )
-		this.prepareRegionUpdate( regionX - 1, regionY - 1, regionZ - 1 );
-
-	this.blockMap.set( voxelX, voxelY, voxelZ, value );
+    var voxelKey = [ voxelX, voxelY, voxelZ ].join( ',' );
+    this.db[ voxelKey ] = value;
 
 };
 
-VOXEL.RegionMap.prototype.get = function ( voxelX, voxelY, voxelZ ) {
+VOXEL.RegionMap.prototype.updateAll = function ( callback ) {
 
-	return this.blockMap.get( voxelX, voxelY, voxelZ );
+    var regionsNeedingUpdate = this.regionsNeedingUpdate;
 
-};
+    var total = regionsNeedingUpdate.length, success = 0;
 
-VOXEL.RegionMap.prototype.updateAll = function ( ) {
+    while ( regionsNeedingUpdate.length ) {
+        regionsNeedingUpdate.shift( ).update( function ( infos ) {
 
-	var regionsNeedingUpdate = this.regionsNeedingUpdate;
+            this.needsUpdate = false;
 
-	for ( var t = 0, T = regionsNeedingUpdate.length; t < T; ++ t ) {
+            callback && callback.call( this, {
+                update : {
+                    position : infos.position,
+                    polygons : infos.polygons },
+                progress : {
+                    total : total,
+                    success : ++ success } } );
 
-		var regionNeedingUpdate = regionsNeedingUpdate[ t ];
-
-		regionNeedingUpdate.update( );
-
-		regionNeedingUpdate.needsUpdate = false;
-
-	}
+        } );
+    }
 
 };

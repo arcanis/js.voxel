@@ -1,47 +1,47 @@
 VOXEL.CreateWorker = ( function ( ) {
 
-	var workerURL = null;
+    var workerURL = null;
 
-	var getWindowURL = function ( ) {
+    var getWindowURL = function ( ) {
 
-		if ( window.URL ) {
+        if ( window.URL ) {
 
-			return window.URL;
+            return window.URL;
 
-		} else if ( window.webkitURL ) {
+        } else if ( window.webkitURL ) {
 
-			return window.webkitURL;
+            return window.webkitURL;
 
-		} else {
+        } else {
 
-			return null;
+            return null;
 
-		}
+        }
 
-	};
+    };
 
-	var getWorkerURL = function ( ) {
+    var getWorkerURL = function ( ) {
 
-		if ( workerURL === null ) {
+        if ( workerURL === null ) {
 
-			var blob = new Blob( [ VOXEL.CreateWorker.dataScript ] );
+            var blob = new Blob( [ VOXEL.CreateWorker.dataScript ] );
 
-			workerURL = getWindowURL( ).createObjectURL( blob );
+            workerURL = getWindowURL( ).createObjectURL( blob );
 
-			return workerURL;
+            return workerURL;
 
-		} else {
+        } else {
 
-			return workerURL;
+            return workerURL;
 
-		}
+        }
 
-	};
+    };
 
-	return function ( ) {
+    return function ( ) {
 
-		return new Worker( getWorkerURL( ) );
+        return new Worker( getWorkerURL( ) );
 
-	};
+    };
 
 } ( ) );

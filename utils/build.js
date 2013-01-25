@@ -1,62 +1,53 @@
 var fs = require( 'fs' );
 
-var uglifyJS = require( 'uglify-js' );
+var UglifyJS = require( 'uglify-js' );
 
 var getSourceCode = function ( list ) {
+    return list.map( function ( path ) {
+        return fs.readFileSync( path, 'utf8' );
+    } ).join( '\n' ); };
 
-	return list.map( function ( path ) {
+var uglifySourceCode = function ( sources ) {
+    return UglifyJS
+        .minify( sources, {
+            compress : {
+                global_defs : {
+                    REGION_WIDTH : 32,
+                    REGION_HEIGHT : 128,
+                    REGION_DEPTH : 32
+                } } } ).code; };
 
-		return fs.readFileSync( path, 'utf8' );
+var clientSources = [
 
-	} ).join( '\n' );
+    'src/client/namespace.js',
 
-};
+    'src/client/Manager/ThreeManager.js',
 
-var uglifySourceCode = function ( sourceCode ) {
+    'src/client/Loader/BinvoxLoader.js',
 
-	return uglifyJS.minify( sourceCode, { fromString : true } ).code;
+    'src/client/Core/CreateWorker.js',
+    'src/client/Core/VoxelEngine.js'
 
-};
+];
 
-var clientSourceCode = getSourceCode( [
+var workerSources = [
 
-	'src/client/namespace.js',
+    'src/worker/namespace.js',
 
-	'src/client/Manager/ThreeManager.js',
+    'src/worker/Algorithm/Tables.js',
 
-	'src/client/Loader/BinvoxLoader.js',
+    'src/worker/Brush/BinvoxBrush.js',
 
-	'src/client/Core/CreateWorker.js',
-	'src/client/Core/VoxelEngine.js'
+    'src/worker/Region/Region.js',
+    'src/worker/Region/RegionMap.js',
 
-] );
+    'src/worker/Core/Application.js',
+    'src/worker/Core/Main.js'
 
-var workerSourceCode = getSourceCode( [
-
-	'src/worker/namespace.js',
-
-	'src/worker/Algorithm/Tables.js',
-
-	'src/worker/Brush/BinvoxBrush.js',
-
-	'src/worker/Block/Block.js',
-	'src/worker/Block/BlockMap.js',
-
-	'src/worker/Region/Region.js',
-	'src/worker/Region/RegionMap.js',
-
-	'src/worker/Core/Application.js',
-	'src/worker/Core/Main.js'
-
-] );
+];
 
 fs.writeFile( 'build/Voxel.js',
-	uglifySourceCode(
-		clientSourceCode + '\n' +
-		'VOXEL.CreateWorker.dataScript = ' + JSON.stringify(
-			uglifySourceCode(
-				workerSourceCode
-			)
-		) + ';'
-	)
-);
+    uglifySourceCode( clientSources ) +
+    'VOXEL.CreateWorker.dataScript = ' + JSON.stringify(
+        uglifySourceCode( workerSources ) ) +
+    ';' );

@@ -1,103 +1,94 @@
 VOXEL.Application = function ( ) {
 
-	this.models = Object.create( null );
+    this.models = Object.create( null );
+
+    this.regionMap = new VOXEL.RegionMap( );
 
 };
 
 VOXEL.Application.prototype.onMessage = function ( event ) {
 
-	var message = event.data;
+    var message = event.data;
 
-	switch ( message.command ) {
+    switch ( message.command ) {
 
-	case 'initialization':
-		this.onInitializationCommand( message.configuration );
-		break ;
+        case 'commit':
+            this.onCommitCommand( message.operations, message.callbackId );
+        break ;
 
-	case 'commit':
-		this.onCommitCommand( message.operations );
-		break ;
-
-	}
+    }
 
 };
 
-VOXEL.Application.prototype.onInitializationCommand = function ( configuration ) {
+VOXEL.Application.prototype.onCommitCommand = function ( operations, callbackId ) {
 
-	VOXEL.Region.width = configuration.region[ 0 ];
-	VOXEL.Region.height = configuration.region[ 1 ];
-	VOXEL.Region.depth = configuration.region[ 2 ];
+    for ( var t = 0, T = operations.length; t < T; ++ t ) {
 
-	VOXEL.Block.width = configuration.block[ 0 ];
-	VOXEL.Block.height = configuration.block[ 1 ];
-	VOXEL.Block.depth = configuration.block[ 2 ];
+        var operation = operations[ t ];
 
-	this.regionMap = new VOXEL.RegionMap( );
+        switch ( operation.type ) {
 
-};
+            case 'set':
+                this.onSetOperation( operation.x, operation.y, operation.z, operation.value );
+            break ;
 
-VOXEL.Application.prototype.onCommitCommand = function ( operations ) {
+            case 'prepare':
+                this.onPrepareOperation( operation.id, operation.model );
+            break ;
 
-	var set = this.regionMap.set.bind( this.regionMap );
+            case 'apply':
+                this.onApplyOperation( operation.id, operation.arguments );
+            break ;
 
-	for ( var t = 0, T = operations.length; t < T; ++ t ) {
+            case 'release':
+                this.onReleaseOperation( operation.id );
+            break ;
 
-		var operation = operations[ t ];
+        }
 
-		switch ( operation.type ) {
+    }
 
-		case 'set':
-			this.onSetOperation( operation.x, operation.y, operation.z, operation.value );
-			break ;
+    this.regionMap.updateAll( function ( infos ) {
 
-		case 'prepare':
-			this.onPrepareOperation( operation.id, operation.model );
-			break ;
+        self.postMessage( {
 
-		case 'apply':
-			this.onApplyOperation( operation.id, operation.arguments );
-			break ;
+            command : 'update',
 
-		case 'release':
-			this.onReleaseOperation( operation.id );
-			break ;
+            callbackId : callbackId,
 
-		}
+            update : infos.update,
+            progress : infos.progress
 
-		set( operation[ 0 ], operation[ 1 ], operation[ 2 ], operation[ 3 ] );
+        } );
 
-	}
-
-	this.regionMap.blockMap.mergeAll( );
-	this.regionMap.updateAll( );
+    } );
 
 };
 
 VOXEL.Application.prototype.onSetOperation = function ( voxelX, voxelY, voxelZ, value ) {
 
-	this.regionMap.set( voxelX, voxelY, voxelZ, value );
+    this.regionMap.set( voxelX, voxelY, voxelZ, value );
 
 };
 
 VOXEL.Application.prototype.onPrepareOperation = function ( id, model ) {
 
-	this.models[ id ] = model;
+    this.models[ id ] = model;
 
 };
 
 VOXEL.Application.prototype.onApplyOperation = function ( id, arguments ) {
 
-	var model = this.models[ id ];
+    var model = this.models[ id ];
 
-	var type = model.type.charAt( 0 ).toUpperCase( ) + model.type.substr( 1 ).toLowerCase( ) + 'Brush';
+    var type = model.type.charAt( 0 ).toUpperCase( ) + model.type.substr( 1 ).toLowerCase( ) + 'Brush';
 
-	VOXEL[ type ].apply( null, [ model, this.regionMap ].concat( arguments ) );
+    VOXEL[ type ].apply( null, [ model, this.regionMap ].concat( arguments ) );
 
 };
 
 VOXEL.Application.prototype.onReleaseOperation = function ( id ) {
 
-	this.models[ id ] = null;
-	delete this.models[ id ];
+    delete this.models[ id ];
 
 };
