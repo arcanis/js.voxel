@@ -18,19 +18,19 @@ var start = function ( ) {
 
         if ( intersects.length === 0 ) return ;
 
-        var voxel = intersects[ 0 ].point.clone( );
-        voxel.x = Math.floor( voxel.x + intersects[ 0 ].face.normal.x );
-        voxel.y = Math.floor( voxel.y + intersects[ 0 ].face.normal.y );
-        voxel.z = Math.floor( voxel.z + intersects[ 0 ].face.normal.z );
+        var size = 4;
 
-        voxelEngine.set( voxel.x, voxel.y, voxel.z, 0x0000ff );
+        var voxel = intersects[ 0 ].point.clone( ), normal = intersects[ 0 ].face.normal.clone( ).normalize( );
+        voxel.x = Math.floor( ( voxel.x + normal.x * size / 2 ) / size ) * size;
+        voxel.y = Math.floor( ( voxel.y + normal.y * size / 2 ) / size ) * size;
+        voxel.z = Math.floor( ( voxel.z + normal.z * size / 2 ) / size ) * size;
 
-        if ( ! chrono ) {
-            chrono = window.setTimeout( function ( ) {
-                voxelEngine.commit( );
-                chrono = undefined;
-            }, 100 );
-        }
+        for ( var x = 0; x < size; ++ x )
+            for ( var y = 0; y < size; ++ y )
+                for ( var z = 0; z < size; ++ z )
+                    voxelEngine.set( voxel.x + x, voxel.y + y, voxel.z + z, 0x0000ff );
+
+        voxelEngine.commit( );
     };
 
     $( document ).mousedown( function ( e ) {
