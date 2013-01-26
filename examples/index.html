@@ -4,6 +4,17 @@
     <head>
         <link rel="stylesheet" type="text/css" href="styles/app.css" />
 
+        <script src="https://www.khronos.org/registry/webgl/sdk/debug/webgl-debug.js"></script>
+        <script>( function ( ok ) {
+            if ( ! ok ) return ;
+            var realGetContext = HTMLCanvasElement.prototype.getContext;
+            HTMLCanvasElement.prototype.getContext = function ( name ) {
+                var context = realGetContext.apply( this, arguments );
+                if ( name == "webgl" || name == "experimental-webgl" )
+                    context = WebGLDebugUtils.makeDebugContext( context );
+                return context; };
+        } )( false );</script>
+
         <script src="vendors/jQuery.js"></script>
 
         <script src="vendors/Three.js"></script>
@@ -29,6 +40,9 @@
 
         </div>
     </body>
+
+    <script src="scripts/Loader.js"></script>
+    <script src="scripts/Loader-drivers.js"></script>
 
     <script src="scripts/scene.js"></script>
     <script src="scripts/app.js"></script>

@@ -1,8 +1,10 @@
-VOXEL.ThreeManager = function ( ) {
+VOXEL.ThreeManager = function ( materials ) {
+
+    this.regionMap = Object.create( null );
 
     this.object3D = new THREE.Object3D( );
 
-    this.regionMap = Object.create( null );
+    this.materials = materials;
 
 };
 
@@ -19,10 +21,7 @@ VOXEL.ThreeManager.prototype.onUpdateCommand = function ( position, polygons ) {
     var vertexIndexCache = Object.create( null );
 
     var geometry = new THREE.Geometry( );
-    var material = new THREE.MeshLambertMaterial( { vertexColors : THREE.VertexColors, shading : THREE.FlatShading } );
-
-    var vertexes = geometry.vertices;
-    var faces = geometry.faces;
+    var material = new THREE.MeshFaceMaterial( this.materials );
 
     for ( var t = 0, T = polygons.length; t < T; ++ t ) {
 
@@ -39,19 +38,25 @@ VOXEL.ThreeManager.prototype.onUpdateCommand = function ( position, polygons ) {
         var vertexIdentifier_1 = vertex_1[ 0 ] + '/' + vertex_1[ 1 ] + '/' + vertex_1[ 2 ];
         var vertexIdentifier_2 = vertex_2[ 0 ] + '/' + vertex_2[ 1 ] + '/' + vertex_2[ 2 ];
 
-        var vertexIndex_0 = typeof vertexIndexCache[ vertexIdentifier_0 ] !== 'undefined' ? vertexIndexCache[ vertexIdentifier_0 ] : vertexIndexCache[ vertexIdentifier_0 ] = vertexes.push( new THREE.Vector3( vertex_0[ 0 ], vertex_0[ 1 ], vertex_0[ 2 ] ) ) - 1;
-        var vertexIndex_1 = typeof vertexIndexCache[ vertexIdentifier_1 ] !== 'undefined' ? vertexIndexCache[ vertexIdentifier_1 ] : vertexIndexCache[ vertexIdentifier_1 ] = vertexes.push( new THREE.Vector3( vertex_1[ 0 ], vertex_1[ 1 ], vertex_1[ 2 ] ) ) - 1;
-        var vertexIndex_2 = typeof vertexIndexCache[ vertexIdentifier_2 ] !== 'undefined' ? vertexIndexCache[ vertexIdentifier_2 ] : vertexIndexCache[ vertexIdentifier_2 ] = vertexes.push( new THREE.Vector3( vertex_2[ 0 ], vertex_2[ 1 ], vertex_2[ 2 ] ) ) - 1;
+        var vertexIndex_0 = typeof vertexIndexCache[ vertexIdentifier_0 ] !== 'undefined' ? vertexIndexCache[ vertexIdentifier_0 ] : vertexIndexCache[ vertexIdentifier_0 ] = geometry.vertices.push( new THREE.Vector3( vertex_0[ 0 ], vertex_0[ 1 ], vertex_0[ 2 ] ) ) - 1;
+        var vertexIndex_1 = typeof vertexIndexCache[ vertexIdentifier_1 ] !== 'undefined' ? vertexIndexCache[ vertexIdentifier_1 ] : vertexIndexCache[ vertexIdentifier_1 ] = geometry.vertices.push( new THREE.Vector3( vertex_1[ 0 ], vertex_1[ 1 ], vertex_1[ 2 ] ) ) - 1;
+        var vertexIndex_2 = typeof vertexIndexCache[ vertexIdentifier_2 ] !== 'undefined' ? vertexIndexCache[ vertexIdentifier_2 ] : vertexIndexCache[ vertexIdentifier_2 ] = geometry.vertices.push( new THREE.Vector3( vertex_2[ 0 ], vertex_2[ 1 ], vertex_2[ 2 ] ) ) - 1;
 
         var face = new THREE.Face3( vertexIndex_2, vertexIndex_1, vertexIndex_0 );
 
         face.normal.set( polygonNormal[ 0 ], polygonNormal[ 1 ], polygonNormal[ 2 ] );
+        face.vertexNormals.push( face.normal.clone( ), face.normal.clone( ), face.normal.clone( ) );
 
-        face.vertexColors[ 2 ] = new THREE.Color( vertex_0[ 3 ] );
-        face.vertexColors[ 1 ] = new THREE.Color( vertex_1[ 3 ] );
-        face.vertexColors[ 0 ] = new THREE.Color( vertex_2[ 3 ] );
+        face.materialIndex = polygonVertexes.sort( function ( a, b ) {
+            return a[ 1 ] > b[ 1 ];
+        } )[ 0 ][ 3 ];
 
-        faces.push( face );
+        geometry.faces.push( face );
+        geometry.faceVertexUvs[ 0 ].push( [
+            new THREE.Vector2( 0, 0 ),
+            new THREE.Vector2( 0, 1 ),
+            new THREE.Vector2( 1, 0 )
+        ] );
 
     }
 

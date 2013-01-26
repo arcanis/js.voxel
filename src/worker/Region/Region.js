@@ -22,30 +22,37 @@ VOXEL.Region.prototype.update = function ( callback ) {
     var edgeFlagMap = VOXEL.Tables.edgeFlagMap;
     var triangleConnections = VOXEL.Tables.triangleConnections;
 
+    var get = function ( key ) {
+        var v = db[ key ];
+        return typeof v !== 'undefined'
+            ? v
+            : 0xffffffff;
+    }.bind( this );
+
     for ( var regionRelativeX = 0, voxelX = this.voxelX; regionRelativeX < REGION_WIDTH; ++ regionRelativeX, ++ voxelX ) {
         for ( var regionRelativeY = 0, voxelY = this.voxelY; regionRelativeY < REGION_HEIGHT; ++ regionRelativeY, ++ voxelY ) {
             for ( var regionRelativeZ = 0, voxelZ = this.voxelZ; regionRelativeZ < REGION_DEPTH; ++ regionRelativeZ, ++ voxelZ ) {
 
                 var cubeValues = [
-                    db[ [ voxelX + 0, voxelY + 0, voxelZ + 0 ].join( ',' ) ] || 0xffffffff,
-                    db[ [ voxelX + 1, voxelY + 0, voxelZ + 0 ].join( ',' ) ] || 0xffffffff,
-                    db[ [ voxelX + 1, voxelY + 1, voxelZ + 0 ].join( ',' ) ] || 0xffffffff,
-                    db[ [ voxelX + 0, voxelY + 1, voxelZ + 0 ].join( ',' ) ] || 0xffffffff,
-                    db[ [ voxelX + 0, voxelY + 0, voxelZ + 1 ].join( ',' ) ] || 0xffffffff,
-                    db[ [ voxelX + 1, voxelY + 0, voxelZ + 1 ].join( ',' ) ] || 0xffffffff,
-                    db[ [ voxelX + 1, voxelY + 1, voxelZ + 1 ].join( ',' ) ] || 0xffffffff,
-                    db[ [ voxelX + 0, voxelY + 1, voxelZ + 1 ].join( ',' ) ] || 0xffffffff
+                    get( [ voxelX + 0, voxelY + 0, voxelZ + 0 ].join( ',' ) ),
+                    get( [ voxelX + 1, voxelY + 0, voxelZ + 0 ].join( ',' ) ),
+                    get( [ voxelX + 1, voxelY + 1, voxelZ + 0 ].join( ',' ) ),
+                    get( [ voxelX + 0, voxelY + 1, voxelZ + 0 ].join( ',' ) ),
+                    get( [ voxelX + 0, voxelY + 0, voxelZ + 1 ].join( ',' ) ),
+                    get( [ voxelX + 1, voxelY + 0, voxelZ + 1 ].join( ',' ) ),
+                    get( [ voxelX + 1, voxelY + 1, voxelZ + 1 ].join( ',' ) ),
+                    get( [ voxelX + 0, voxelY + 1, voxelZ + 1 ].join( ',' ) )
                 ];
 
                 var edgesFlagsIndex = ( 0
-                    | ( cubeValues[ 0 ] !== 0xFFFFFFFF ? 1 << 0 : 0 )
-                    | ( cubeValues[ 1 ] !== 0xFFFFFFFF ? 1 << 1 : 0 )
-                    | ( cubeValues[ 2 ] !== 0xFFFFFFFF ? 1 << 2 : 0 )
-                    | ( cubeValues[ 3 ] !== 0xFFFFFFFF ? 1 << 3 : 0 )
-                    | ( cubeValues[ 4 ] !== 0xFFFFFFFF ? 1 << 4 : 0 )
-                    | ( cubeValues[ 5 ] !== 0xFFFFFFFF ? 1 << 5 : 0 )
-                    | ( cubeValues[ 6 ] !== 0xFFFFFFFF ? 1 << 6 : 0 )
-                    | ( cubeValues[ 7 ] !== 0xFFFFFFFF ? 1 << 7 : 0 )
+                    | ( cubeValues[ 0 ] !== 0xffffffff ? 1 << 0 : 0 )
+                    | ( cubeValues[ 1 ] !== 0xffffffff ? 1 << 1 : 0 )
+                    | ( cubeValues[ 2 ] !== 0xffffffff ? 1 << 2 : 0 )
+                    | ( cubeValues[ 3 ] !== 0xffffffff ? 1 << 3 : 0 )
+                    | ( cubeValues[ 4 ] !== 0xffffffff ? 1 << 4 : 0 )
+                    | ( cubeValues[ 5 ] !== 0xffffffff ? 1 << 5 : 0 )
+                    | ( cubeValues[ 6 ] !== 0xffffffff ? 1 << 6 : 0 )
+                    | ( cubeValues[ 7 ] !== 0xffffffff ? 1 << 7 : 0 )
                 );
 
                 var edgesFlags = edgeFlagMap[ edgesFlagsIndex ];

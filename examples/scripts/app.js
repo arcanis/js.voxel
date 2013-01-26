@@ -28,7 +28,7 @@ var start = function ( ) {
         for ( var x = 0; x < size; ++ x )
             for ( var y = 0; y < size; ++ y )
                 for ( var z = 0; z < size; ++ z )
-                    voxelEngine.set( voxel.x + x, voxel.y + y, voxel.z + z, 0x0000ff );
+                    voxelEngine.set( voxel.x + x, voxel.y + y, voxel.z + z, y < size / 4 * 3 ? 1 : 0 );
 
         voxelEngine.commit( );
     };
@@ -51,22 +51,34 @@ window.onload = function ( ) { create( function ( ) {
     camera.updateMatrix( );
     camera.lookAt( new THREE.Vector3( 0, 0, 0 ) );
 
-    voxelManager = new VOXEL.ThreeManager( );
-    scene.add( voxelManager.object3D );
+    var loader = new Loader( );
 
-    voxelEngine = new VOXEL.VoxelEngine( voxelManager );
+    loader.push( texture, 'grass', 'images/grass.png' );
+    loader.push( texture, 'dirt', 'images/dirt.png' );
 
-    for ( var x = - 50; x <= 50; ++ x )
-        for ( var z = - 50; z <= 50; ++ z )
-            voxelEngine.set( x, 0, z, 0xff0000 );
+    loader.push( direct, function ( data ) {
+        scene.add( ( voxelManager = new VOXEL.ThreeManager( [
+            new THREE.MeshLambertMaterial( { map : data.grass } ),
+            new THREE.MeshLambertMaterial( { map : data.dirt } )
+        ] ) ).object3D );
+    } );
+
+    loader.push( voxel, 100, function ( callback ) {
+        voxelEngine = new VOXEL.VoxelEngine( voxelManager );
+
+        for ( var x = - 50; x <= 50; ++ x )
+            for ( var z = - 50; z <= 50; ++ z )
+                voxelEngine.set( x, 0, z, 0 );
+
+        voxelEngine.commit( callback );
+    } );
 
     $( document.body ).addClass( 'ok' ).addClass( 'hard-loading' );
-    voxelEngine.commit( function ( infos ) {
-        if ( infos.progress.success === infos.progress.total ) {
-            $( document.body ).removeClass( 'hard-loading' );
-            start( );
+    loader.start( function ( progress ) {
+        if ( progress === 1 ) {
+            $( document.body ).removeClass( 'hard-loading' ); start( );
         } else {
-            $( '#loading .cursor' ).css( 'width', ( infos.progress.success / infos.progress.total * 100 ) + '%' );
+            $( '#loading .cursor' ).css( 'width', ( progress * 100 ) + '%' );
         }
     } );
 
