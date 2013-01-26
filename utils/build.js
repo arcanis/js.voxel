@@ -12,9 +12,9 @@ var uglifySourceCode = function ( sources ) {
         .minify( sources, {
             compress : {
                 global_defs : {
-                    REGION_WIDTH : 32,
-                    REGION_HEIGHT : 128,
-                    REGION_DEPTH : 32
+                    REGION_WIDTH : 16,
+                    REGION_HEIGHT : 16,
+                    REGION_DEPTH : 16
                 } } } ).code; };
 
 var clientSources = [
