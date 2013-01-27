@@ -1,3 +1,5 @@
+var VOXEL = VOXEL || Object.create( null );
+
 VOXEL.RegionMap = function ( db ) {
 
     this.db = db || Object.create( null );

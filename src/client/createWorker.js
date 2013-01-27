@@ -1,4 +1,6 @@
-VOXEL.CreateWorker = ( function ( ) {
+var VOXEL = VOXEL || Object.create( null );
+
+VOXEL.createWorker = ( function ( ) {
 
     var workerURL = null;
 
@@ -24,7 +26,7 @@ VOXEL.CreateWorker = ( function ( ) {
 
         if ( workerURL === null ) {
 
-            var blob = new Blob( [ VOXEL.CreateWorker.dataScript ] );
+            var blob = new Blob( [ VOXEL.createWorker.dataScript ] );
 
             workerURL = getWindowURL( ).createObjectURL( blob );
 

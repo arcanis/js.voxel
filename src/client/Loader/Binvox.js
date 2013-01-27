@@ -1,8 +1,11 @@
-VOXEL.BinvoxLoader = function ( path, callback ) {
+var VOXEL = VOXEL || Object.create( null );
+VOXEL.Loader = VOXEL.Loader || Object.create( null );
+
+VOXEL.Loader.Binvox = function ( path, callback ) {
 
     var xhr = new XMLHttpRequest( );
 
-    xhr.onload = function ( ) { callback( VOXEL.BinvoxLoader.parse( xhr.responseText ) ); };
+    xhr.onload = function ( ) { callback( VOXEL.Loader.Binvox.parse( xhr.responseText ) ); };
 
     xhr.open( 'GET', path, true );
     xhr.overrideMimeType( 'text/plain; charset=x-user-defined' );
@@ -10,11 +13,11 @@ VOXEL.BinvoxLoader = function ( path, callback ) {
 
 };
 
-VOXEL.BinvoxLoader.format = /^#binvox 1\ndim ([0-9]*[1-9][0-9]*) (?:\1) (?:\1)\ntranslate (-?(?:[0-9]+(?:\.[0-9]*)?|[0-9]*\.[0-9]+)) (-?(?:[0-9]+(?:\.[0-9]*)?|[0-9]*\.[0-9]+)) (-?(?:[0-9]+(?:\.[0-9]*)?|[0-9]*\.[0-9]+))\nscale ([1-9][0-9]*(?:\.[0-9]*)?|0*\.[0-9]*[1-9][0-9]*)\ndata\n((?:[\S\s]{2})*)$/;
+VOXEL.Loader.Binvox.format = /^#binvox 1\ndim ([0-9]*[1-9][0-9]*) (?:\1) (?:\1)\ntranslate (-?(?:[0-9]+(?:\.[0-9]*)?|[0-9]*\.[0-9]+)) (-?(?:[0-9]+(?:\.[0-9]*)?|[0-9]*\.[0-9]+)) (-?(?:[0-9]+(?:\.[0-9]*)?|[0-9]*\.[0-9]+))\nscale ([1-9][0-9]*(?:\.[0-9]*)?|0*\.[0-9]*[1-9][0-9]*)\ndata\n((?:[\S\s]{2})*)$/;
 
-VOXEL.BinvoxLoader.parse = function ( content ) {
+VOXEL.Loader.Binvox.parse = function ( content ) {
 
-    var parts = content.match( VOXEL.BinvoxLoader.format );
+    var parts = content.match( VOXEL.Loader.Binvox.format );
 
     if ( ! parts )
         throw new Error( 'Syntax error' );

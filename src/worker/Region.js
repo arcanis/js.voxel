@@ -1,3 +1,5 @@
+var VOXEL = VOXEL || Object.create( null );
+
 VOXEL.Region = function ( regionMap, regionX, regionY, regionZ ) {
 
     this.needsUpdate = false;

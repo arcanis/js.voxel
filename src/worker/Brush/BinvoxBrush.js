@@ -1,4 +1,7 @@
-VOXEL.BinvoxBrush = function ( model, regionMap, beginningX, beginningY, beginningZ, value ) {
+var VOXEL = VOXEL || Object.create( null );
+VOXEL.Brush = VOXEL.Brush || Object.create( null );
+
+VOXEL.Brush.Binvox = function ( model, regionMap, beginningX, beginningY, beginningZ, value ) {
 
     var size = model.size;
     var translation = model.translation;

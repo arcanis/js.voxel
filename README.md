@@ -19,7 +19,7 @@ $> npm run-script build
 
 ## Usage
 
-### new VOXEL.VoxelEngine( )
+### new VOXEL.Engine( )
 
 Returns a new engine instance.
 

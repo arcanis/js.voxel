@@ -1,11 +1,13 @@
-VOXEL.VoxelEngine = function ( managerClass ) {
+var VOXEL = VOXEL || Object.create( null );
+
+VOXEL.Engine = function ( managerClass ) {
 
     this.modelId = 0;
 
     this.callbackId = 0;
     this.callbacks = { };
 
-    this.worker = VOXEL.CreateWorker( );
+    this.worker = VOXEL.createWorker( );
     this.manager = managerClass;
     this.operations = [ ];
 
@@ -14,7 +16,7 @@ VOXEL.VoxelEngine = function ( managerClass ) {
 
 };
 
-VOXEL.VoxelEngine.prototype.set = function ( x, y, z, value ) {
+VOXEL.Engine.prototype.set = function ( x, y, z, value ) {
 
     this.operations.push( {
         type : 'set',
@@ -26,7 +28,7 @@ VOXEL.VoxelEngine.prototype.set = function ( x, y, z, value ) {
 
 };
 
-VOXEL.VoxelEngine.prototype.prepare = function ( model ) {
+VOXEL.Engine.prototype.prepare = function ( model ) {
 
     var id = this.modelId ++;
 
@@ -40,7 +42,7 @@ VOXEL.VoxelEngine.prototype.prepare = function ( model ) {
 
 };
 
-VOXEL.VoxelEngine.prototype.apply = function ( id ) {
+VOXEL.Engine.prototype.apply = function ( id ) {
 
     var argumentsArray = Array.prototype.slice.call( arguments, 0 );
     argumentsArray.shift( );
@@ -53,7 +55,7 @@ VOXEL.VoxelEngine.prototype.apply = function ( id ) {
 
 };
 
-VOXEL.VoxelEngine.prototype.release = function ( id ) {
+VOXEL.Engine.prototype.release = function ( id ) {
 
     this.operations.push( {
         type : 'release',
@@ -62,13 +64,13 @@ VOXEL.VoxelEngine.prototype.release = function ( id ) {
 
 };
 
-VOXEL.VoxelEngine.prototype.rollback = function ( ) {
+VOXEL.Engine.prototype.rollback = function ( ) {
 
     this.operations = [ ];
 
 };
 
-VOXEL.VoxelEngine.prototype.commit = function ( callback ) {
+VOXEL.Engine.prototype.commit = function ( callback ) {
 
     var callbackId = callback ? this.callbackId ++ : null;
     if ( callback ) this.callbacks[ callbackId ] = callback;
@@ -83,7 +85,7 @@ VOXEL.VoxelEngine.prototype.commit = function ( callback ) {
 
 };
 
-VOXEL.VoxelEngine.prototype.receive = function ( event ) {
+VOXEL.Engine.prototype.receive = function ( event ) {
 
     var message = event.data;
 
@@ -101,7 +103,7 @@ VOXEL.VoxelEngine.prototype.receive = function ( event ) {
 
 };
 
-VOXEL.VoxelEngine.prototype.error = function ( error ) {
+VOXEL.Engine.prototype.error = function ( error ) {
 
     console.log( error );
 

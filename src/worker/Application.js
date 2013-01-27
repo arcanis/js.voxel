@@ -1,3 +1,5 @@
+var VOXEL = VOXEL || Object.create( null );
+
 VOXEL.Application = function ( ) {
 
     this.models = Object.create( null );
@@ -81,9 +83,9 @@ VOXEL.Application.prototype.onApplyOperation = function ( id, arguments ) {
 
     var model = this.models[ id ];
 
-    var type = model.type.charAt( 0 ).toUpperCase( ) + model.type.substr( 1 ).toLowerCase( ) + 'Brush';
+    var type = model.type.charAt( 0 ).toUpperCase( ) + model.type.substr( 1 ).toLowerCase( );
 
-    VOXEL[ type ].apply( null, [ model, this.regionMap ].concat( arguments ) );
+    VOXEL.Brush[ type ].apply( null, [ model, this.regionMap ].concat( arguments ) );
 
 };
 

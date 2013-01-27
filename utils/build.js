@@ -14,4 +14,6 @@ var uglifySourceCode = function ( sources ) {
                 } } } ).code; };
 
 fs.writeFileSync( 'build/Voxel.js',
-    uglifySourceCode( Glob.sync( 'src/**/*.js' ) ) );
+    uglifySourceCode( Glob.sync( 'src/client/**/*.js' ) ) +
+    'VOXEL.createWorker.dataScript=' + JSON.stringify(
+        uglifySourceCode( Glob.sync( 'src/worker/**/!(main.js)+(*.js)' ).concat( [ 'src/worker/main.js' ] ) ) ) + ';' );

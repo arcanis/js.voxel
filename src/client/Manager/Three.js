@@ -1,4 +1,7 @@
-VOXEL.ThreeManager = function ( materials ) {
+var VOXEL = VOXEL || Object.create( null );
+VOXEL.Manager = VOXEL.Manager || Object.create( null );
+
+VOXEL.Manager.Three = function ( materials ) {
 
     this.regionMap = Object.create( null );
 
@@ -8,7 +11,7 @@ VOXEL.ThreeManager = function ( materials ) {
 
 };
 
-VOXEL.ThreeManager.prototype.onUpdateCommand = function ( position, polygons ) {
+VOXEL.Manager.Three.prototype.onUpdateCommand = function ( position, polygons ) {
 
     var identifier = position.join( '/' );
 
