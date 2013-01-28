@@ -52,7 +52,7 @@ VOXEL.Manager.Three.prototype.onUpdateCommand = function ( position, polygons ) 
 
         face.materialIndex = polygonVertexes.sort( function ( a, b ) {
             return a[ 1 ] > b[ 1 ];
-        } )[ 0 ][ 3 ];
+        } )[ 0 ][ 3 ] & 0xffffff;
 
         geometry.faces.push( face );
         geometry.faceVertexUvs[ 0 ].push( [
