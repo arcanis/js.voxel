@@ -18,6 +18,10 @@ VOXEL.Application.prototype.onMessage = function ( event ) {
             this.onCommitCommand( message.operations, message.callbackId );
         break ;
 
+        case 'test':
+            this.onTestCommand( message.from, message.size, message.callbackId );
+        break ;
+
     }
 
 };
@@ -60,6 +64,24 @@ VOXEL.Application.prototype.onCommitCommand = function ( operations, callbackId 
 
             update : infos.update,
             progress : infos.progress
+
+        } );
+
+    } );
+
+};
+
+VOXEL.Application.prototype.onTestCommand = function ( from, size, callbackId ) {
+
+    this.regionMap.test( from, size, function ( result ) {
+
+        self.postMessage( {
+
+            command : 'test',
+
+            callbackId : callbackId,
+
+            result : result
 
         } );
 

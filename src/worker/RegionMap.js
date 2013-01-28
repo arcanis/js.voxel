@@ -64,7 +64,25 @@ VOXEL.RegionMap.prototype.set = function ( voxelX, voxelY, voxelZ, value ) {
         this.prepareRegionUpdate( regionX - 1, regionY - 1, regionZ - 1 );
 
     var voxelKey = [ voxelX, voxelY, voxelZ ].join( ',' );
-    this.db[ voxelKey ] = value;
+
+    if ( value !== 0xffffffff ) {
+        this.db[ voxelKey ] = value;
+    } else {
+        delete this.db[ voxelKey ];
+    }
+
+};
+
+VOXEL.RegionMap.prototype.test = function ( from, size, callback ) {
+
+    dance:
+    for ( var x = from[ 0 ], X = x + size[ 0 ]; x < X; ++ x )
+        for ( var y = from[ 1 ], Y = y + size[ 1 ]; y < Y; ++ y )
+            for ( var z = from[ 2 ], Z = z + size[ 2 ]; z < Z; ++ z )
+                if ( Object.prototype.hasOwnProperty.call( this.db, [ x, y, z ].join( ',' ) ) )
+                    break dance;
+
+    callback( x !== X || y !== Y || z !== Z );
 
 };
 

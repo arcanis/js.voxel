@@ -85,6 +85,20 @@ VOXEL.Engine.prototype.commit = function ( callback ) {
 
 };
 
+VOXEL.Engine.prototype.test = function ( from, size, callback ) {
+
+    var callbackId = callback ? this.callbackId ++ : null;
+    if ( callback ) this.callbacks[ callbackId ] = callback;
+
+    this.worker.postMessage( {
+        command : 'test',
+        from : from,
+        size : size,
+        callbackId : callbackId
+    } );
+
+};
+
 VOXEL.Engine.prototype.receive = function ( event ) {
 
     var message = event.data;
@@ -97,6 +111,14 @@ VOXEL.Engine.prototype.receive = function ( event ) {
                 update : message.update,
                 progress : message.progress
             } );
+        break ;
+
+        case 'test':
+            message.callbackId !== null && this.callbacks[ message.callbackId ]( message.result );
+        break ;
+
+        case 'log':
+            console.log( message.content );
         break ;
 
     }
