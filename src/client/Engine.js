@@ -1,132 +1,117 @@
 var VOXEL = VOXEL || Object.create( null );
 
-VOXEL.Engine = function ( managerClass ) {
+VOXEL.Engine = ( function ( ) {
 
-    this.modelId = 0;
+    var getMainRegionKeyFromWorldPoint = function ( worldPoint ) {
+        return [ Math.floor( worldPoint[ 0 ] / REGION_WIDTH )
+               , Math.floor( worldPoint[ 1 ] / REGION_HEIGHT )
+               , Math.floor( worldPoint[ 2 ] / REGION_DEPTH ) ]; };
 
-    this.callbackId = 0;
-    this.callbacks = { };
+    var getRegionPointFromWorldPoint = function ( worldPoint, regionKey ) {
+        return [ worldPoint[ 0 ] - regionKey[ 0 ]
+               , worldPoint[ 1 ] - regionKey[ 1 ]
+               , worldPoint[ 2 ] - regionKey[ 2 ] ]; };
 
-    this.worker = VOXEL.createWorker( );
-    this.manager = managerClass;
-    this.operations = [ ];
+    var Engine = function ( fetch ) {
 
-    this.worker.onerror = this.error.bind( this );
-    this.worker.onmessage = this.receive.bind( this );
+        VOXEL.Emitter( this )
+            .addEventType( 'regionFetched' )
+            .addEventType( 'regionMissing' )
+            .addEventType( 'regionPolygonized' );
 
-};
+        this.regions = Object.create( null );
+        this.scheduler = new VOXEL.Scheduler( 4 );
 
-VOXEL.Engine.prototype.set = function ( x, y, z, value ) {
+    };
 
-    this.operations.push( {
-        type : 'set',
-        value : value,
-        x : x,
-        y : y,
-        z : z
-    } );
+    Engine.prototype.fetch = function ( regionKey, callback ) {
 
-};
+        var regionFetchCallback = function ( region ) {
+            this.regions[ regionKey ] = region;
+            region && this.trigger( 'regionFetched', new VOXEL.Engine.RegionFetchedEvent( regionKey, region ) );
+            callback( region );
+        }.bind( this );
 
-VOXEL.Engine.prototype.prepare = function ( model ) {
+        if ( typeof this.regions[ regionKey ] === 'undefined' ) {
+            var event = new VOXEL.Engine.RegionMissingEvent( regionKey );
+            this.trigger( 'regionMissing', event, regionFetchCallback );
+            event.isDefaultPrevented( ) || callback( null );
+        } else {
+            callback( this.regions[ regionKey ] );
+        }
 
-    var id = this.modelId ++;
+        return this;
 
-    this.operations.push( {
-        type : 'prepare',
-        id : id,
-        model : model
-    } );
+    };
 
-    return id;
+    Engine.prototype.get = function ( worldPoint, callback ) {
 
-};
+        var regionKey = getMainRegionKeyFromWorldPoint( worldPoint );
+        var regionPoint = getRegionPointFromWorldPoint( worldPoint, regionKey );
 
-VOXEL.Engine.prototype.apply = function ( id ) {
+        this.fetch( regionKey, function ( region ) {
+            if ( region === null ) callback( null );
+            else region.get( regionPoint, callback );
+        }.bind( this ) );
 
-    var argumentsArray = Array.prototype.slice.call( arguments, 0 );
-    argumentsArray.shift( );
+        return this;
 
-    this.operations.push( {
-        type : 'apply',
-        id : id,
-        arguments : argumentsArray
-    } );
+    };
 
-};
+    Engine.prototype.set = function ( worldPoint, value, callback ) {
 
-VOXEL.Engine.prototype.release = function ( id ) {
-
-    this.operations.push( {
-        type : 'release',
-        id : id
-    } );
-
-};
-
-VOXEL.Engine.prototype.rollback = function ( ) {
-
-    this.operations = [ ];
-
-};
-
-VOXEL.Engine.prototype.commit = function ( callback ) {
-
-    var callbackId = callback ? this.callbackId ++ : null;
-    if ( callback ) this.callbacks[ callbackId ] = callback;
-
-    this.worker.postMessage( {
-        command : 'commit',
-        operations : this.operations,
-        callbackId : callbackId
-    } );
-
-    this.operations = [ ];
-
-};
-
-VOXEL.Engine.prototype.test = function ( from, size, callback ) {
-
-    var callbackId = callback ? this.callbackId ++ : null;
-    if ( callback ) this.callbacks[ callbackId ] = callback;
-
-    this.worker.postMessage( {
-        command : 'test',
-        from : from,
-        size : size,
-        callbackId : callbackId
-    } );
-
-};
-
-VOXEL.Engine.prototype.receive = function ( event ) {
-
-    var message = event.data;
-
-    switch ( message.command ) {
-
-        case 'update':
-            this.manager.onUpdateCommand( message.update.position, message.update.polygons );
-            message.callbackId !== null && this.callbacks[ message.callbackId ]( {
-                update : message.update,
-                progress : message.progress
+        var apply = function ( regionKey, regionPoint, callback, allowFetching ) {
+            callback = callback || function ( ) { };
+            if ( ! this.regions[ regionKey ] && ! allowFetching ) return ;
+            this.fetch( regionKey, function ( region ) {
+                if ( region === null ) callback( false );
+                else region.set( regionPoint, value, function ( ) { callback( true ); } );
             } );
-        break ;
+        }.bind( this );
 
-        case 'test':
-            message.callbackId !== null && this.callbacks[ message.callbackId ]( message.result );
-        break ;
+        var checkNeighbor = function ( cx, cy, cz ) {
+            if ( ( ! cx || regionPoint[ 0 ] === 0 )
+              && ( ! cy || regionPoint[ 1 ] === 0 )
+              && ( ! cz || regionPoint[ 2 ] === 0 ) )
+                apply( [ regionKey[ 0 ] - cx,
+                         regionKey[ 1 ] - cy,
+                         regionKey[ 2 ] - cz ],
+                       [ ! cx ? regionPoint[ 0 ] : REGION_WIDTH,
+                         ! cy ? regionPoint[ 1 ] : REGION_HEIGHT,
+                         ! cz ? regionPoint[ 2 ] : REGION_DEPTH ],
+                       null,
+                       false ); };
 
-        case 'log':
-            console.log( message.content );
-        break ;
+        var regionKey = getMainRegionKeyFromWorldPoint( worldPoint );
+        var regionPoint = getRegionPointFromWorldPoint( worldPoint, regionKey );
 
-    }
+        checkNeighbor( 1, 0, 0 );
+        checkNeighbor( 0, 1, 0 );
+        checkNeighbor( 0, 0, 1 );
+        checkNeighbor( 1, 1, 0 );
+        checkNeighbor( 0, 1, 1 );
+        checkNeighbor( 1, 0, 1 );
+        checkNeighbor( 1, 1, 1 );
 
-};
+        apply( regionKey, regionPoint, callback, true );
 
-VOXEL.Engine.prototype.error = function ( error ) {
+        return this;
 
-    console.log( error );
+    };
 
-};
+    Engine.RegionMissingEvent = function ( regionKey ) {
+        var isDefaultPrevented = false;
+        this.preventDefault = function ( ) { isDefaultPrevented = true; };
+        this.isDefaultPrevented = function ( ) { return isDefaultPrevented; };
+
+        this.regionKey = regionKey;
+    };
+
+    Engine.RegionFetchedEvent = function ( regionKey, region ) {
+        this.regionKey = regionKey;
+        this.region = region;
+    };
+
+    return Engine;
+
+} )( );

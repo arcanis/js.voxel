@@ -14,6 +14,6 @@ var uglifySourceCode = function ( sources ) {
                 } } } ).code; };
 
 fs.writeFileSync( 'build/Voxel.js',
-    uglifySourceCode( Glob.sync( 'src/client/**/*.js' ) ) +
-    'VOXEL.createWorker.dataScript=' + JSON.stringify(
-        uglifySourceCode( Glob.sync( 'src/worker/**/!(main.js)+(*.js)' ).concat( [ 'src/worker/main.js' ] ) ) ) + ';' );
+    uglifySourceCode( [ ].concat( Glob.sync( 'src/client/**/!(export.js)+(*.js)' ) ) ) +
+    'VOXEL.Scheduler.workerScript=' + JSON.stringify(
+        uglifySourceCode( [ ].concat( Glob.sync( 'src/worker/**/!(main.js)+(*.js)' ), [ 'src/worker/main.js' ] ) ) ) + ';' );
