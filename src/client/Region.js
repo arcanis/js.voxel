@@ -7,6 +7,11 @@ VOXEL.Region = ( function ( ) {
             + relativePoint[ 1 ] * ( REGION_WIDTH + 1 )
             + relativePoint[ 0 ]; };
 
+    var createBuffer = function ( ) {
+        var buffer = new ArrayBuffer( ( REGION_WIDTH + 1 ) * ( REGION_HEIGHT + 1 ) * ( REGION_DEPTH + 1 ) * 4 );
+        for ( var array = new Uint32Array( buffer ), t = 0, T = array.length; t < T; ++ t ) array[ t ] = 0xffffffff;
+        return buffer; };
+
     var Region = function ( ) {
 
         this.pendingRead = [ ];
@@ -14,7 +19,7 @@ VOXEL.Region = ( function ( ) {
 
         this.dataless = false;
 
-        this.buffer = new ArrayBuffer( ( REGION_WIDTH + 1 ) * ( REGION_HEIGHT + 1 ) * ( REGION_DEPTH + 1 ) * 4 );
+        this.buffer = createBuffer( );
         this.synchronize( );
 
     };
@@ -39,7 +44,7 @@ VOXEL.Region = ( function ( ) {
             } );
         } );
 
-        return Object.keys( pendingWrite ).length > 0;
+        return this;
 
     };
 
@@ -71,33 +76,5 @@ VOXEL.Region = ( function ( ) {
     };
 
     return Region;
-
-} )( );
-
-VOXEL.Region.Task = ( function ( ) {
-
-    var Task = function ( region ) {
-
-        this.region = region;
-
-    };
-
-    Task.prototype.launch = function ( ) {
-
-        this.region.dataless = true;
-        this.region.buffer = null;
-
-    };
-
-    Task.prototype.complete = function ( data ) {
-
-        this.region.buffer = data.buffer;
-        this.region.dataless = false;
-
-        this.oncomplete( );
-
-    };
-
-    return this;
 
 } )( );

@@ -2,7 +2,22 @@ var VOXEL = VOXEL || Object.create( null );
 
 VOXEL.Emitter = ( function ( ) {
 
-    var on = function ( callbacks, name, fn, context ) {
+    var fwd = function ( fn ) {
+        return function ( _, selector ) {
+
+            var fwdArguments = arguments;
+
+            selector.split( / +/g ).forEach( function ( name ) {
+                fwdArguments[ 1 ] = name;
+                fn.apply( fwd, fwdArguments );
+            }, this );
+
+            return this;
+
+        };
+    };
+
+    var on = fwd( function ( callbacks, name, fn, context ) {
 
         if ( ! callbacks[ name ] )
             throw new Error( 'Invalid event "' + name + '"' );
@@ -11,9 +26,9 @@ VOXEL.Emitter = ( function ( ) {
 
         return this;
 
-    };
+    } );
 
-    var off = function ( callbacks, name, fn, context ) {
+    var off = fwd( function ( callbacks, name, fn, context ) {
 
         if ( ! callbacks[ name ] )
             throw new Error( 'Invalid event "' + name + '"' );
@@ -22,25 +37,21 @@ VOXEL.Emitter = ( function ( ) {
             return descriptor[ 0 ] !== fn || descriptor[ 1 ] !== context;
         } );
 
-        return this;
+    } );
 
-    };
-
-    var once = function ( callbacks, name, fn, context ) {
+    var once = fwd( function ( callbacks, name, fn, context ) {
 
         if ( ! callbacks[ name ] )
             throw new Error( 'Invalid event "' + name + '"' );
 
         callbacks[ name ].push( [ fn, context || this, true ] );
 
-        return this;
+    } );
 
-    };
-
-    var trigger = function ( callbacks, name ) {
+    var trigger = fwd( function ( callbacks, name ) {
 
         if ( ! callbacks[ name ] )
-            return this;
+            throw new Error( 'Invalid event "' + name + '"' );
 
         var fwdArguments = Array.prototype.slice.call( arguments, 2 );
 
@@ -49,9 +60,7 @@ VOXEL.Emitter = ( function ( ) {
             return descriptor[ 2 ] === false;
         } );
 
-        return this;
-
-    };
+    } );
 
     return function ( instance ) {
 
