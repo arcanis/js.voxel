@@ -2,201 +2,206 @@ var VOXEL = VOXEL || Object.create( null );
 
 VOXEL.Engine = ( function ( ) {
 
-    var getMainRegionKeyFromWorldPoint = function ( worldPoint ) {
-        return [ Math.floor( worldPoint[ 0 ] / REGION_WIDTH )
-               , Math.floor( worldPoint[ 1 ] / REGION_HEIGHT )
-               , Math.floor( worldPoint[ 2 ] / REGION_DEPTH ) ]; };
-
-    var getRegionPointFromWorldPoint = function ( worldPoint, regionKey ) {
-        return [ worldPoint[ 0 ] - regionKey[ 0 ]
-               , worldPoint[ 1 ] - regionKey[ 1 ]
-               , worldPoint[ 2 ] - regionKey[ 2 ] ]; };
-
     var Engine = function ( fetch ) {
 
         VOXEL.Emitter( this )
-            .addEventType( 'regionFetched' )
-            .addEventType( 'regionMissing' )
-            .addEventType( 'regionUpdated' )
             .addEventType( 'regionPolygonized' );
 
         this.regions = Object.create( null );
+        this.dirtyRegions = [ ];
+
+        this.tasksetId = 0;
+        this.tasksets = Object.create( null );
 
         this.scheduler = new VOXEL.Scheduler( 4 );
 
-        this.scheduler.on( 'taskQueued', function ( event ) {
+        this.scheduler.on( 'taskCompleted', function ( e ) {
 
-            var regionKey = event.task.regionKey
-              , region = this.regions[ regionKey ];
+            var taskset = this.tasksets[ e.task.tasksetId ];
+            taskset.progress += 1;
 
-            region.scheduled = true;
+            var regionPolygonizedEvent = new VOXEL.Engine.RegionPolygonizedEvent( e.task.regionKey, e.task.region, e.data.polygons );
 
-        }, this );
+            this.trigger( 'regionPolygonized', regionPolygonizedEvent );
 
-        this.scheduler.on( 'taskSent', function ( event ) {
-
-            var regionKey = event.task.regionKey
-              , region = event.task.region;
-
-            region.dirty = false;
-
-            region.buffer = false;
-            region.dataless = true;
-
-        }, this );
-
-        this.scheduler.on( 'taskCompleted', function ( event ) {
-
-            var regionKey = event.task.regionKey
-              , region = event.task.region;
-
-            region.scheduled = false;
-
-            region.buffer = event.data.buffer;
-            region.dataless = false;
-
-            region.synchronize( );
-
-            this.update( regionKey );
-
-            this.trigger( 'regionPolygonized', new VOXEL.Engine.RegionPolygonizedEvent( regionKey, region, event.data.polygons ) );
-
-        }, this );
-
-        this.on( 'regionFetched regionUpdated', function ( event ) {
-
-            var regionKey = event.regionKey
-              , region = event.region;
-
-            region.dirty = true;
-
-            this.update( regionKey );
+            taskset.callback( null, taskset.total, taskset.progress );
 
         }, this );
 
     };
 
-    Engine.prototype.fetch = function ( regionKey, callback ) {
+    Engine.prototype.getRegion = function ( regionKey ) {
 
-        var regionFetchCallback = function ( region ) {
-            this.regions[ regionKey ] = region;
-            region && this.trigger( 'regionFetched', new VOXEL.Engine.RegionFetchedEvent( regionKey, region ) );
-            callback( region );
+        var descriptor = this.regions[ regionKey ];
+
+        return descriptor ? descriptor.region : undefined;
+
+    };
+
+    Engine.prototype.setRegion = function ( regionKey, region ) {
+
+        var importBorders = function ( cx, cy, cz ) {
+
+            var descriptor = this.regions[[ regionKey[ 0 ] + cx, regionKey[ 1 ] + cy, regionKey[ 2 ] + cz ]];
+            if ( ! descriptor ) return ;
+
+            for ( var x = 0, X = cx ? 1 : REGION_WIDTH; x < X; ++ x ) {
+                for ( var y = 0, Y = cy ? 1 : REGION_HEIGHT; y < Y; ++ y ) {
+                    for ( var z = 0, Z = cz ? 1 : REGION_DEPTH; z < Z; ++ z ) {
+                        region.set( [
+                            ( ! cx ? x : REGION_WIDTH ),
+                            ( ! cy ? y : REGION_HEIGHT ),
+                            ( ! cz ? z : REGION_DEPTH )
+                        ], descriptor.region.get( [
+                            cx ? 0 : x,
+                            cy ? 0 : y,
+                            cz ? 0 : z
+                        ] ) );
+                    }
+                }
+            }
+
         }.bind( this );
 
-        if ( typeof this.regions[ regionKey ] === 'undefined' ) {
-            var event = new VOXEL.Engine.RegionMissingEvent( regionKey );
-            this.trigger( 'regionMissing', event, regionFetchCallback );
-            event.isDefaultPrevented( ) || callback( null );
-        } else {
-            callback( this.regions[ regionKey ] );
-        }
+        var exportBorders = function ( cx, cy, cz ) {
 
-        return this;
+            var descriptor = this.regions[[ regionKey[ 0 ] + cx, regionKey[ 1 ] + cy, regionKey[ 2 ] + cz ]];
+            if ( ! descriptor ) return ;
+
+            for ( var x = 0, X = cx ? 1 : REGION_WIDTH; x < X; ++ x ) {
+                for ( var y = 0, Y = cy ? 1 : REGION_HEIGHT; y < Y; ++ y ) {
+                    for ( var z = 0, Z = cz ? 1 : REGION_DEPTH; z < Z; ++ z ) {
+                        descriptor.region.set( [
+                            ( ! cx ? x : REGION_WIDTH ),
+                            ( ! cy ? y : REGION_HEIGHT ),
+                            ( ! cz ? z : REGION_DEPTH )
+                        ], region.get( [
+                            cx ? 0 : x,
+                            cy ? 0 : y,
+                            cz ? 0 : z
+                        ] ) );
+                    }
+                }
+            }
+
+        }.bind( this );
+
+		/*
+        importBorders( + 1, + 0, + 0 );
+        importBorders( + 1, + 1, + 0 );
+        importBorders( + 0, + 1, + 0 );
+        importBorders( + 0, + 0, + 1 );
+        importBorders( + 1, + 0, + 1 );
+        importBorders( + 1, + 1, + 1 );
+        importBorders( + 0, + 1, + 1 );
+
+        exportBorders( - 1, - 0, - 0 );
+        exportBorders( - 1, - 1, - 0 );
+        exportBorders( - 0, - 1, - 0 );
+        exportBorders( - 0, - 0, - 1 );
+        exportBorders( - 1, - 0, - 1 );
+        exportBorders( - 1, - 1, - 1 );
+        exportBorders( - 0, - 1, - 1 );
+		*/
+
+        var descriptor = this.regions[ regionKey ] || { region : null, version : 0, dirty : false };
+        this.regions[ regionKey ] = descriptor;
+
+        if ( ! descriptor.dirty )
+            this.dirtyRegions.push( regionKey.slice( ) );
+
+        descriptor.dirty = true;
+        descriptor.region = region;
+        descriptor.version += 1;
 
     };
 
-    Engine.prototype.update = function ( regionKey ) {
+    Engine.prototype.getVoxel = function ( worldVoxel ) {
 
-        var region = this.regions[ regionKey ];
+        var regionKey = VOXEL.getMainRegionKeyFromWorldVoxel( worldVoxel );
+        var regionVoxel = VOXEL.getRegionVoxelFromWorldVoxel( worldVoxel, regionKey );
 
-        if ( ! region.dirty || region.scheduled )
-            return ;
+        var descriptor = this.regions[ regionKey ];
 
-        region.scheduled = true;
-        region.dirty = false;
-
-        this.scheduler.queue( {
-            regionKey : regionKey,
-            region : region,
-            data : { buffer : region.buffer },
-            transfers : [ region.buffer ]
-        } );
+        return descriptor ? descriptor.region.get( regionVoxel ) : undefined;
 
     };
 
-    Engine.prototype.get = function ( worldPoint, callback ) {
+    Engine.prototype.setVoxel = function ( worldVoxel, value ) {
 
-        var regionKey = getMainRegionKeyFromWorldPoint( worldPoint );
-        var regionPoint = getRegionPointFromWorldPoint( worldPoint, regionKey );
+        var setRegionVoxel = function ( regionKey, regionVoxel ) {
 
-        this.fetch( regionKey, function ( region ) {
-            if ( region === null ) callback( null );
-            else region.get( regionPoint, callback );
-        }.bind( this ) );
+            var descriptor = this.regions[ regionKey ];
+            if ( ! descriptor ) return ;
 
-        return this;
+            if ( ! descriptor.dirty )
+                this.dirtyRegions.push( regionKey.slice( ) );
 
-    };
+            descriptor.region.set( regionVoxel, value );
+            descriptor.dirty = true;
 
-    Engine.prototype.set = function ( worldPoint, value, callback ) {
-
-        var apply = function ( regionKey, regionPoint, callback, allowFetching ) {
-            callback = callback || function ( ) { };
-            if ( ! this.regions[ regionKey ] && ! allowFetching ) return ;
-            this.fetch( regionKey, function ( region ) {
-                if ( region === null ) callback( false );
-                else region.set( regionPoint, value, function ( ) {
-                    callback( true );
-                    this.trigger( 'regionUpdated', new VOXEL.Engine.RegionUpdatedEvent( regionKey, region, regionPoint, value ) );
-                }.bind( this ) );
-            }.bind( this ) );
         }.bind( this );
 
         var checkNeighbor = function ( cx, cy, cz ) {
-            if ( ( ! cx || regionPoint[ 0 ] === 0 )
-              && ( ! cy || regionPoint[ 1 ] === 0 )
-              && ( ! cz || regionPoint[ 2 ] === 0 ) )
-                apply( [ regionKey[ 0 ] - cx,
-                         regionKey[ 1 ] - cy,
-                         regionKey[ 2 ] - cz ],
-                       [ ! cx ? regionPoint[ 0 ] : REGION_WIDTH,
-                         ! cy ? regionPoint[ 1 ] : REGION_HEIGHT,
-                         ! cz ? regionPoint[ 2 ] : REGION_DEPTH ],
-                       null,
-                       false ); };
 
-        var regionKey = getMainRegionKeyFromWorldPoint( worldPoint );
-        var regionPoint = getRegionPointFromWorldPoint( worldPoint, regionKey );
+            if ( ( cx && regionVoxel[ 0 ] !== 0 ) || ( cy && regionVoxel[ 1 ] !== 0 ) || ( cz && regionVoxel[ 2 ] !== 0 ) )
+                return ;
+		
+            setRegionVoxel( [
+                regionKey[ 0 ] + cx,
+                regionKey[ 1 ] + cy,
+                regionKey[ 2 ] + cz
+            ], [
+                ! cx ? regionVoxel[ 0 ] : REGION_WIDTH,
+                ! cy ? regionVoxel[ 1 ] : REGION_HEIGHT,
+                ! cz ? regionVoxel[ 2 ] : REGION_DEPTH
+            ] );
 
-        checkNeighbor( 1, 0, 0 );
-        checkNeighbor( 0, 1, 0 );
-        checkNeighbor( 0, 0, 1 );
-        checkNeighbor( 1, 1, 0 );
-        checkNeighbor( 0, 1, 1 );
-        checkNeighbor( 1, 0, 1 );
-        checkNeighbor( 1, 1, 1 );
+        };
 
-        apply( regionKey, regionPoint, callback, true );
+        var regionKey = VOXEL.getMainRegionKeyFromWorldVoxel( worldVoxel );
+        var regionVoxel = VOXEL.getRegionVoxelFromWorldVoxel( worldVoxel, regionKey );
+
+        checkNeighbor( - 1, - 0, - 0 );
+        checkNeighbor( - 0, - 1, - 0 );
+        checkNeighbor( - 0, - 0, - 1 );
+        checkNeighbor( - 1, - 1, - 0 );
+        checkNeighbor( - 0, - 1, - 1 );
+        checkNeighbor( - 1, - 0, - 1 );
+        checkNeighbor( - 1, - 1, - 1 );
+
+        setRegionVoxel( regionKey, regionVoxel );
 
         return this;
 
     };
 
-    Engine.RegionMissingEvent = function ( regionKey ) {
+    Engine.prototype.polygonize = function ( callback ) {
 
-        var isDefaultPrevented = false;
-        this.preventDefault = function ( ) { isDefaultPrevented = true; };
-        this.isDefaultPrevented = function ( ) { return isDefaultPrevented; };
+        var dirtyRegions = this.dirtyRegions;
+        this.dirtyRegions = [ ];
 
-        this.regionKey = regionKey;
+        var tasksetId = this.tasksetId ++;
+        this.tasksets[ tasksetId ] = {
+            total : dirtyRegions.length, progress : 0,
+            callback : callback || function ( ) { }
+        };
 
-    };
+        dirtyRegions.forEach( function ( regionKey ) {
 
-    Engine.RegionFetchedEvent = function ( regionKey, region ) {
+            var descriptor = this.regions[ regionKey ];
+            descriptor.dirty = false;
+			
+            this.scheduler.queue( {
+                tasksetId : tasksetId,
+                regionKey : regionKey,
+                version : descriptor.version,
+                data : { buffer : descriptor.region.buffer }
+            } );
 
-        this.regionKey = regionKey;
-        this.region = region;
+        }.bind( this ) );
 
-    };
-
-    Engine.RegionUpdatedEvent = function ( regionKey, region, regionPoint, value ) {
-
-        this.regionKey = regionKey;
-        this.region = region;
-
-        this.regionPoint = regionPoint;
-        this.value = value;
+        return this;
 
     };
 

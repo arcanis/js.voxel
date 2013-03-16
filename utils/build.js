@@ -8,9 +8,9 @@ var uglifySourceCode = function ( sources ) {
         .minify( sources, {
             compress : {
                 global_defs : {
-                    REGION_WIDTH : 16,
-                    REGION_HEIGHT : 16,
-                    REGION_DEPTH : 16
+                    REGION_WIDTH : 10,
+                    REGION_HEIGHT : 10,
+                    REGION_DEPTH : 10
                 } } } ).code; };
 
 fs.writeFileSync( 'build/Voxel.js',

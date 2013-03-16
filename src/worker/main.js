@@ -12,9 +12,9 @@ self.onmessage = function ( event ) {
     var triangleConnections = Tables.triangleConnections;
 
     var getVoxelIndex = function ( x, y, z ) { return 0
-            + z * ( REGION_WIDTH + 1 ) * ( REGION_HEIGHT + 1 )
-            + y * ( REGION_WIDTH + 1 )
-            + x; };
+        + z * ( REGION_WIDTH + 1 ) * ( REGION_HEIGHT + 1 )
+        + y * ( REGION_WIDTH + 1 )
+        + x; };
 
     var setLayerVoxel = function ( layers, data, id ) {
         var value = data[ id ];
@@ -87,7 +87,6 @@ self.onmessage = function ( event ) {
                     );
 
                     var edgesFlags = edgeFlagMap[ edgesFlagsIndex ];
-                    self.postMessage( { command : 'log', data : cubeValues } );
                     if ( edgesFlags === 0 ) continue ;
 
                     var edgesVertexes = { };
@@ -141,9 +140,7 @@ self.onmessage = function ( event ) {
 
     self.postMessage( {
         command : 'complete',
-        data : {
-            buffer : buffer,
-            polygons : polygons }
-    }, [ buffer ] );
+        data : { polygons : polygons }
+    } );
 
 };
