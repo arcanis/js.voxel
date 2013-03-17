@@ -86,7 +86,6 @@ VOXEL.Engine = ( function ( ) {
 
         }.bind( this );
 
-		/*
         importBorders( + 1, + 0, + 0 );
         importBorders( + 1, + 1, + 0 );
         importBorders( + 0, + 1, + 0 );
@@ -102,7 +101,6 @@ VOXEL.Engine = ( function ( ) {
         exportBorders( - 1, - 0, - 1 );
         exportBorders( - 1, - 1, - 1 );
         exportBorders( - 0, - 1, - 1 );
-		*/
 
         var descriptor = this.regions[ regionKey ] || { region : null, version : 0, dirty : false };
         this.regions[ regionKey ] = descriptor;
