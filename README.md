@@ -1,5 +1,9 @@
 # JS.Voxel
 
+> **Warning :** This library is not updated anymore ! The reason for this is that voxel world management (generation and polygonization) requires workers and thread pools to achieve good performances. Since I don't want to put a dedicated thread pool into the library, I have decided that it was less painful (including for the final developers - you) to write the voxel management system in the application (rather than in a library).
+>
+> *You can find the current up-to-date implementation of the js.voxel functionalities in the [Voxplode](https://github.com/arcanis/voxplode/) repository. It uses the [SWAT](http://arcanis.github.io/swat/) framework to efficiently manage workers.*
+
 ## Installation
 
 ### Precompiled library
